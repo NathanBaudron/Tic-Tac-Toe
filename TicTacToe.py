@@ -1,4 +1,6 @@
 from Jeux_a_deux_joueur import GrapheD, calculeAttracteur
+import random
+
 
 class grille :
     
@@ -90,6 +92,13 @@ class grille :
         # Convertir la grille (liste de listes) en un tuple de tuples pour être hashable
         return hash(tuple(tuple(row) for row in self.g))
     
+    def __repr__(self):
+        txt = ""
+        for i, ligne in enumerate(self.g):
+            txt += " | ".join(c if c is not None else " " for c in ligne)
+            if i < 2:
+                txt += " -> "
+        return f"{txt}" 
 
 class grapheB(GrapheD) :
     
@@ -152,20 +161,107 @@ class grapheB(GrapheD) :
         self.attracteur1 = calculeAttracteur(graphe, self.S1, self.attracteur1)
         self.attracteur2 = calculeAttracteur(graphe, self.S2, self.attracteur2)
 
-    
+  
+
     
 class ordi :
     
-    def __init__(self, G, champ_vision = 20) :
+    def __init__(self, G, symb="X") :
         self.G = G
         self.curseur = self.G.sommet
-        self.champ_vision = 20
+        print(self.curseur)
+        if symb == "X":
+            self.mon_attracteur = self.G.attracteur1
+            self.attracteur_adverse = self.G.attracteur2
+            self.grille_mon_tour = self.G.S1
+            self.grille_son_tour = self.G.S2
+        else:
+            self.mon_attracteur = self.G.attracteur2
+            self.attracteur_adverse = self.G.attracteur1
+            self.grille_mon_tour = self.G.S2
+            self.grille_son_tour = self.G.S1
     
+    def extension_chemin_rec(self, grille) :
+        if grille.verif_winner() is not None :
+            return [[grille]]
+        else :
+            t = []
+            for g in self.G.voisins(grille) :
+                if g in self.mon_attracteur :
+                    t2 = self.extension_chemin_rec(g)
+                    for chemin in t2 :
+                        t.append([grille] + chemin)
+            return t       
+    def extension_chemin(self, chemin) :
+        """retourne le chemin jusqu'à la victoire
+
+        Args:
+            chemin (list): liste de grille
+            grille (grille): grille de départ qui est dans une stratégie gagnante
+        Raises: 
+            ValueError: si la grille n'est pas dans une stratégie gagnante
+        Returns:
+            list: liste de grille
+        """
+        chemin_possible = self.extension_chemin_rec(chemin[-1])
+        # Trouver le chemin le plus court parmi les chemins possibles
+        if not chemin_possible:
+            return chemin  # Aucun chemin possible, on retourne le chemin actuel
+        chemin_le_plus_court = min(chemin_possible, key=len)
+        return chemin + chemin_le_plus_court[1:]
+    
+    def choix_rec(self, dico_racine, curseur) :
+        if curseur in self.mon_attracteur or curseur in self.attracteur_adverse:
+            dico_racine[curseur]={}
+        else : 
+            dico_temp={}
+            dico_racine[curseur]=dico_temp
+            Grilles = self.G.voisins(curseur)
+            for grille in Grilles :
+                self.choix_rec(dico_temp, grille, )
+    
+    
+        
     def choix(self) :
-        pass
+        dico_racine = {}
+        self.choix_rec(dico_racine, self.curseur)
+        liste_chemin = self.parcours_rec_pour_choix(self.curseur, dico_racine)
+        
+        #selection des chemins gagnants ou nuls
+        liste_chemin = [chemin for chemin in liste_chemin if chemin[-1] not in self.attracteur_adverse]
+
+        # D'abord, on cherche les chemins qui mènent à une stratégie gagnante
+        chemins_gagnants = [chemin for chemin in liste_chemin if chemin[-1] in self.mon_attracteur]
+        if chemins_gagnants:
+            # On étend chaque chemin gagnant jusqu'à la victoire et on prend le plus court
+            chemins_etendus = [self.extension_chemin(chemin) for chemin in chemins_gagnants]
+            chemin_gagnant = min(chemins_etendus, key=len)
+            return chemin_gagnant[2]
+
+        # Ensuite, on cherche les chemins qui ne mènent ni à une victoire adverse ni à une victoire (match nul)
+        chemins_nuls = [chemin for chemin in liste_chemin if chemin[-1] not in self.attracteur_adverse]
+        if chemins_nuls:
+            chemin_nul = min(chemins_nuls, key=len)
+            return chemin_nul[2]
+
+        # Sinon, pas de stratégie gagnante ou nulle, on choisit aléatoirement
+        
+        return random.choice(self.G.voisins(self.curseur))
+        
+        
+        
+    def parcours_rec_pour_choix (self, cle, dictio) :
+        if len(dictio) == 0 :
+            return [[cle]]
+        else :
+            t = []
+            for k in dictio :
+                t2 = self.parcours_rec_pour_choix(k, dictio[k])
+                for chemin in t2 :
+                    t.append([cle] + chemin)
+            return t
     
-    
-    
+
 
 
 
@@ -189,3 +285,6 @@ for i in range(min(5,len(graph.attracteur1))) :
 #print(len(graph.attracteur1))
 #print(len(graph.attracteur2))
 #print(len(graph.adj))
+
+ordii = ordi(graph)
+print(ordii.choix())
