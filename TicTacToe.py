@@ -1,3 +1,42 @@
+"""
+Module TicTacToe
+----------------
+Ce module implémente le jeu du Tic-Tac-Toe (morpion) en utilisant des classes pour représenter la grille, le graphe des états du jeu, et un joueur automatique (ordinateur).
+
+Classes principales :
+---------------------
+- grille :
+    Représente une grille de jeu 3x3. Permet d'ajouter un symbole, de vérifier le gagnant, de générer les grilles possibles, et de comparer des grilles.
+    Méthodes principales :
+        - __init__(self, t=None) : Initialise la grille vide ou à partir d'une grille existante.
+        - a_qui_le_tour(self) : Retourne le symbole du joueur dont c'est le tour ('X' ou 'O').
+        - ajout_symbole(self, symb, x, y) : Retourne une nouvelle grille avec le symbole ajouté aux coordonnées (x, y).
+        - verif_winner(self) : Vérifie s'il y a un gagnant sur la grille.
+        - getNouvellesGrillesPossibles(self) : Retourne la liste des nouvelles grilles possibles après le coup du joueur courant.
+        - __eq__, __hash__, __str__, __repr__ : Pour la comparaison, l'affichage et l'utilisation dans des ensembles/dictionnaires.
+
+- grapheB (hérite de GrapheD) :
+    Représente le graphe des états du jeu, où chaque sommet est une grille. Génère toutes les grilles possibles et calcule les attracteurs (stratégies gagnantes).
+    Méthodes principales :
+        - __init__(self) : Initialise le graphe avec la grille de départ et construit le graphe des états.
+        - creation_tte_les_grilles(self) : Génère toutes les grilles possibles et les transitions.
+        - creation_des_attracteurs(self) : Calcule les attracteurs pour chaque joueur.
+
+- ordi :
+    Implémente un joueur automatique qui choisit le meilleur coup selon les attracteurs calculés.
+    Méthodes principales :
+        - __init__(self, G, symb="X") : Initialise l'ordinateur avec le graphe et le symbole du joueur.
+        - extension_chemin_rec(self, grille) : Cherche récursivement les chemins menant à la victoire.
+        - extension_chemin(self, chemin) : Étend un chemin jusqu'à la victoire.
+        - choix(self) : Retourne le meilleur coup à jouer selon la stratégie gagnante ou nulle.
+        - update_curseur(self, grille) : Met à jour la position courante de l'ordinateur.
+
+Dépendances :
+-------------
+- Jeux_a_deux_joueur (pour GrapheD et calculeAttracteur)
+- random (pour les choix aléatoires)
+"""
+
 from Jeux_a_deux_joueur import GrapheD, calculeAttracteur
 import random
 
@@ -261,6 +300,9 @@ class ordi :
                     t.append([cle] + chemin)
             return t
     
+    def update_curseur(self, grille) :
+        self.curseur = grille
+        
 
 
 
