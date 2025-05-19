@@ -335,7 +335,7 @@ class ordi :
         if self.curseur in self.mon_attracteur :
             return min([g for g in self.G.voisins(self.curseur) if g in self.mon_attracteur], key=lambda x : self.mon_attracteur[x])
         elif self.curseur in self.attracteur_adverse :
-            return min([g for g in self.G.voisins(self.curseur) if g in self.attracteur_adverse], key=lambda x : self.attracteur_adverse[x])
+            return max([g for g in self.G.voisins(self.curseur) if g in self.attracteur_adverse], key=lambda x : self.attracteur_adverse[x])
         else : 
             return random.choice([e for e in self.G.voisins(self.curseur)  if e not in self.attracteur_adverse])
         
