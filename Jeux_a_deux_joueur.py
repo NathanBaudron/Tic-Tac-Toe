@@ -34,9 +34,9 @@ class GrapheD:
             a+=1
         return a 
 
-    def degre(self,s):
+    def degre(self,s) :
         a=0
-        for e in self.adj[s]:
+        for e in self.adj[s] :
             a+=1
         return a
     
@@ -87,28 +87,25 @@ def degre_dico(g) :
         d[s] = len(g.voisins(s))
     return d
 
-def marqueEtPropage(s, d, B, S1, attracteur) :
-    if s not in attracteur :
-        attracteur[s] = 0
-        for e in B[s] :
-            d[e] -= 1
-            if e in S1 :
-                attracteur = marqueEtPropage(e, d, B, S1, attracteur)
-            elif d[e] == 0:
-                attracteur = marqueEtPropage(e, d, B, S1, attracteur)
-    return attracteur
 
-def calculeAttracteur(A, S1, V1) :
-    d = degre_dico(A)
-    B = reverseGraph(A).adj
-    attracteur = {}
-    for s in V1 :
-        sous_attracteur = marqueEtPropage(s,d,B,S1,{})
-        for k in sous_attracteur :
-            attracteur[k] = 0
+def marqueEtPropage(s, d, B, S1, attracteur, compteur):
+    if s not in attracteur:
+        attracteur[s] = compteur
+        compteur += 1
+        for y in B.adj[s]:
+            d[y] -= 1
+            if y in S1 or d[y] == 0:
+                marqueEtPropage(y, d, B, S1, attracteur, compteur)
+
+def calculeAttracteur(A, S1, V1):
+    d = degre_dico(A)  # dictionnaire des degrés sortants du graphe A
+    B = reverseGraph(A)  # graphe inverse de A
+    attracteur = dict()
+    for s in V1:
+        marqueEtPropage(s, d, B, S1, attracteur, 0)
     return attracteur
 
 
 
-    
-    
+
+

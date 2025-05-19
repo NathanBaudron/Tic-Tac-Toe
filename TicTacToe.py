@@ -42,14 +42,39 @@ import random
 
 
 class grille :
-    
+    """
+    Classe représentant une grille de jeu de Tic-Tac-Toe (morpion).
+
+    Attributs :
+    -----------
+    g : list[list[str|None]]
+        Grille 3x3 contenant les symboles 'X', 'O' ou None pour une case vide.
+
+    """
+
     def __init__(self, t=None):
+        """
+        Initialise une grille de Tic-Tac-Toe vide ou à partir d'une grille existante.
+
+        Paramètres
+        ----------
+        t : list[list[str|None]], optionnel
+            Grille existante à copier. Si None, crée une grille vide.
+        """
         if t is None:
             self.g = [[None for _ in range(3)] for _ in range(3)]
         else:
             self.g = [row[:] for row in t]  
-        
+    
     def a_qui_le_tour(self) :
+        """
+        Détermine à qui c'est le tour de jouer ('X' ou 'O').
+
+        Retourne
+        -------
+        str
+            'X' si c'est au tour de X, 'O' sinon.
+        """
         d = {"X" : 0, "O": 0}
         for r in self.g :
             for c in r :
@@ -61,22 +86,43 @@ class grille :
             return "O"
         else :
             raise ValueError(f"{d}, {self}")
+    
     def __str__(self) :
+        """
+        Retourne une représentation textuelle de la grille.
+
+        Retourne
+        -------
+        str
+            Grille formatée ligne par ligne.
+        """
         txt = ""
         for ligne in self.g :
             txt += str(ligne) + "\n"
         return txt
     
     def ajout_symbole(self, symb, x, y) :
-        """retourne une nouvelle grille avec le symbole ajouter aux coordonnées (x,y)
+        """
+        Retourne une nouvelle grille avec le symbole ajouté aux coordonnées (x, y).
 
-        Args:
-            symb ("X" ou "O")
-            x (int)
-            y (int)
+        Paramètres
+        ----------
+        symb : str
+            'X' ou 'O'.
+        x : int
+            Colonne (0, 1 ou 2).
+        y : int
+            Ligne (0, 1 ou 2).
 
-        Raises:
-            IndexError: si la case est déjà occupée
+        Retourne
+        -------
+        grille
+            Nouvelle grille avec le symbole ajouté.
+
+        Exceptions
+        ----------
+        IndexError
+            Si la case est déjà occupée.
         """
         new_g = grille(self.g)
         if self.g[y][x] is None :
@@ -86,6 +132,14 @@ class grille :
             raise IndexError(f"les coordonées données sont déjà occupées par {self.g[y][x]}")
     
     def verif_winner(self) :
+        """
+        Vérifie s'il y a un gagnant sur la grille (lignes, colonnes, diagonales).
+
+        Retourne
+        -------
+        str ou None
+            'X' si X a gagné, 'O' si O a gagné, None sinon.
+        """
         #verif colonnes
         for i in range(3) :
             colonne = [self.g[j][i] for j in range(3)]
@@ -110,6 +164,14 @@ class grille :
         return None
         
     def getNouvellesGrillesPossibles(self):
+        """
+        Retourne la liste des nouvelles grilles possibles après le coup du joueur courant.
+
+        Retourne
+        -------
+        list[grille]
+            Liste des grilles résultant de tous les coups possibles.
+        """
         joueur = self.a_qui_le_tour()
         nouvelles_grilles = []
         for y in range(3):
@@ -123,15 +185,44 @@ class grille :
         return nouvelles_grilles
     
     def __eq__(self, other):
+        """
+        Compare deux grilles pour l'égalité.
+
+        Paramètres
+        ----------
+        other : grille
+            Autre grille à comparer.
+
+        Retourne
+        -------
+        bool
+            True si les grilles sont identiques, False sinon.
+        """
         if not isinstance(other, grille):
             return False
         return self.g == other.g
 
     def __hash__(self):
+        """
+        Rend la grille utilisable dans des ensembles ou comme clé de dictionnaire.
+
+        Retourne
+        -------
+        int
+            Hash de la grille.
+        """
         # Convertir la grille (liste de listes) en un tuple de tuples pour être hashable
         return hash(tuple(tuple(row) for row in self.g))
     
     def __repr__(self):
+        """
+        Retourne une représentation compacte de la grille pour le debug.
+
+        Retourne
+        -------
+        str
+            Représentation compacte de la grille.
+        """
         txt = ""
         for i, ligne in enumerate(self.g):
             txt += " | ".join(c if c is not None else " " for c in ligne)
@@ -140,28 +231,42 @@ class grille :
         return f"{txt}" 
 
 class grapheB(GrapheD) :
-    
+    """
+    Classe représentant un graphe biparti des états du jeu de Tic-Tac-Toe.
+    Chaque sommet est une grille, et les arêtes représentent les coups possibles.
+    Les sommets sont répartis en deux ensembles selon le joueur dont c'est le tour (S1 et S2).
+    Les attracteurs permettent d'identifier les stratégies gagnantes pour chaque joueur.
+    """
     def __init__(self) :
+        """
+        Initialise le graphe biparti avec la grille de départ, les ensembles de sommets,
+        les attracteurs et construit le graphe des états du jeu.
+        """
         g0 = grille()
         self.sommet = g0
         self.S1 = set()
         self.S1.add(g0)
         self.S2 = set()
-        
         self.adj= {g0 : set()}
         self.attracteur1 = set()
         self.attracteur2 = set()
-        
         self.creation_tte_les_grilles()
         self.creation_des_attracteurs()
-        
+    
     def creation_tte_les_grilles(self) :
+        """
+        Génère récursivement toutes les grilles possibles à partir de la grille initiale,
+        construit les transitions (arêtes) et répartit les grilles dans les ensembles S1/S2
+        selon le joueur dont c'est le tour.
+        Marque les grilles terminales dans les attracteurs correspondants.
+        """
         grilles_suiv = [list(self.adj)[0]]
         partie_graphe = self.S2
         while len(grilles_suiv) > 0 :
             grille_actuelle = grilles_suiv.pop(0)
             nouvelles_grilles = grille_actuelle.getNouvellesGrillesPossibles()
             for g in nouvelles_grilles :
+                partie_graphe = self.S1 if g.a_qui_le_tour() == "X" else self.S2
                 #ajout grille à la partie correspondant au joueur qui joue
                 if g not in partie_graphe :
                     partie_graphe.add(g)
@@ -182,33 +287,37 @@ class grapheB(GrapheD) :
                     print(g)
                     print(grille_actuelle)
                     raise KeyError
-            #on change de joueur
-            if partie_graphe == self.S1 :
-                partie_graphe = self.S1
-            else :
-                partie_graphe = self.S1
-                
-                
-                
-
-                    
-        
+            
     
     def creation_des_attracteurs(self) :
+        """
+        Calcule les attracteurs (stratégies gagnantes) pour chaque joueur à partir du graphe construit.
+        """
         graphe = GrapheD()
         graphe.adj = self.adj
         self.attracteur1 = calculeAttracteur(graphe, self.S1, self.attracteur1)
         self.attracteur2 = calculeAttracteur(graphe, self.S2, self.attracteur2)
 
-  
-
     
 class ordi :
-    
+    """
+    Classe représentant un joueur automatique (ordinateur) pour le Tic-Tac-Toe.
+    Utilise les attracteurs du graphe biparti pour choisir le meilleur coup possible.
+    """
     def __init__(self, G, symb="X") :
+        """
+        Initialise l'ordinateur avec le graphe des états et le symbole du joueur.
+
+        Paramètres
+        ----------
+        G : grapheB
+            Graphe biparti des états du jeu.
+        symb : str, optionnel
+            Symbole du joueur contrôlé par l'ordinateur ('X' ou 'O').
+        """
         self.G = G
         self.curseur = self.G.sommet
-        print(self.curseur)
+        self.symb = symb
         if symb == "X":
             self.mon_attracteur = self.G.attracteur1
             self.attracteur_adverse = self.G.attracteur2
@@ -220,87 +329,28 @@ class ordi :
             self.grille_mon_tour = self.G.S2
             self.grille_son_tour = self.G.S1
     
-    def extension_chemin_rec(self, grille) :
-        if grille.verif_winner() is not None :
-            return [[grille]]
-        else :
-            t = []
-            for g in self.G.voisins(grille) :
-                if g in self.mon_attracteur :
-                    t2 = self.extension_chemin_rec(g)
-                    for chemin in t2 :
-                        t.append([grille] + chemin)
-            return t       
-    def extension_chemin(self, chemin) :
-        """retourne le chemin jusqu'à la victoire
-
-        Args:
-            chemin (list): liste de grille
-            grille (grille): grille de départ qui est dans une stratégie gagnante
-        Raises: 
-            ValueError: si la grille n'est pas dans une stratégie gagnante
-        Returns:
-            list: liste de grille
-        """
-        chemin_possible = self.extension_chemin_rec(chemin[-1])
-        # Trouver le chemin le plus court parmi les chemins possibles
-        if not chemin_possible:
-            return chemin  # Aucun chemin possible, on retourne le chemin actuel
-        chemin_le_plus_court = min(chemin_possible, key=len)
-        return chemin + chemin_le_plus_court[1:]
-    
-    def choix_rec(self, dico_racine, curseur) :
-        if curseur in self.mon_attracteur or curseur in self.attracteur_adverse:
-            dico_racine[curseur]={}
-        else : 
-            dico_temp={}
-            dico_racine[curseur]=dico_temp
-            Grilles = self.G.voisins(curseur)
-            for grille in Grilles :
-                self.choix_rec(dico_temp, grille, )
     
     
-        
     def choix(self) :
-        dico_racine = {}
-        self.choix_rec(dico_racine, self.curseur)
-        liste_chemin = self.parcours_rec_pour_choix(self.curseur, dico_racine)
+        if self.curseur in self.mon_attracteur :
+            return min([g for g in self.G.voisins(self.curseur) if g in self.mon_attracteur], key=lambda x : self.mon_attracteur[x])
+        elif self.curseur in self.attracteur_adverse :
+            return min([g for g in self.G.voisins(self.curseur) if g in self.attracteur_adverse], key=lambda x : self.attracteur_adverse[x])
+        else : 
+            return random.choice([e for e in self.G.voisins(self.curseur)  if e not in self.attracteur_adverse])
         
-        #selection des chemins gagnants ou nuls
-        liste_chemin = [chemin for chemin in liste_chemin if chemin[-1] not in self.attracteur_adverse]
-
-        # D'abord, on cherche les chemins qui mènent à une stratégie gagnante
-        chemins_gagnants = [chemin for chemin in liste_chemin if chemin[-1] in self.mon_attracteur]
-        if chemins_gagnants:
-            # On étend chaque chemin gagnant jusqu'à la victoire et on prend le plus court
-            chemins_etendus = [self.extension_chemin(chemin) for chemin in chemins_gagnants]
-            chemin_gagnant = min(chemins_etendus, key=len)
-            return chemin_gagnant[2]
-
-        # Ensuite, on cherche les chemins qui ne mènent ni à une victoire adverse ni à une victoire (match nul)
-        chemins_nuls = [chemin for chemin in liste_chemin if chemin[-1] not in self.attracteur_adverse]
-        if chemins_nuls:
-            chemin_nul = min(chemins_nuls, key=len)
-            return chemin_nul[2]
-
-        # Sinon, pas de stratégie gagnante ou nulle, on choisit aléatoirement
-        
-        return random.choice(self.G.voisins(self.curseur))
-        
-        
-        
-    def parcours_rec_pour_choix (self, cle, dictio) :
-        if len(dictio) == 0 :
-            return [[cle]]
-        else :
-            t = []
-            for k in dictio :
-                t2 = self.parcours_rec_pour_choix(k, dictio[k])
-                for chemin in t2 :
-                    t.append([cle] + chemin)
-            return t
+    
+    
     
     def update_curseur(self, grille) :
+        """
+        Met à jour la position courante de l'ordinateur (curseur) avec la nouvelle grille.
+
+        Paramètres
+        ----------
+        grille : grille
+            Nouvelle grille courante.
+        """
         self.curseur = grille
         
 
@@ -310,23 +360,99 @@ class ordi :
 
 #test
 
-g = grille()
-t = g.getNouvellesGrillesPossibles()
-
-for grill in t :
-    #print(grill.a_qui_le_tour())
-
-    pass
-
-
 graph = grapheB()
 for i in range(min(5,len(graph.attracteur1))) :
     #print(list(graph.attracteur1)[i])
     pass
 
+#print(grille() in graph.attracteur1)
+
 #print(len(graph.attracteur1))
 #print(len(graph.attracteur2))
 #print(len(graph.adj))
 
-ordii = ordi(graph)
-print(ordii.choix())
+#print("Intersection attracteur1 & attracteur2 est vide", not (set(graph.attracteur1) & set(graph.attracteur2)))
+
+ordii = ordi(graph, "X")
+#print(ordii.choix())
+
+def test_ordi_choix_victoire_immediate():
+    """L'ordi doit jouer pour gagner immédiatement."""
+    g = grille([
+        ["X", "X", None],
+        ["O", "O", None],
+        [None, None, None]
+    ])
+    graph = grapheB()
+    ordi_x = ordi(graph, symb="X")
+    ordi_x.curseur = g
+    coup = ordi_x.choix()
+    print("Grille avant le coup :")
+    print(g)
+    print("Coup choisi par l'ordi :")
+    print(coup)
+    assert coup.g[0][2] == "X", "L'ordi doit jouer pour gagner immédiatement sur la ligne 0"
+
+def test_ordi_choix_blocage_adverse():
+    """L'ordi doit bloquer la victoire de l'adversaire."""
+    g = grille([
+        ["O", None, None],
+        ["X", "X", None],
+        [None, None, None]
+    ])
+    graph = grapheB()
+    ordi_o = ordi(graph, symb="O")
+    ordi_o.curseur = g
+    coup = ordi_o.choix()
+    print("Grille avant le coup :")
+    print(g)
+    print("Coup choisi par l'ordi :")
+    print(coup)
+    assert coup.g[1][2] == "O", "L'ordi doit bloquer la victoire de X sur la ligne 1"
+
+def test_ordi_choix_match_nul():
+    """Situation où seul un match nul est possible."""
+    g = grille([
+        ["X", "O", "X"],
+        ["X", "O", "O"],
+        ["O", "X", None]
+    ])
+    graph = grapheB()
+    ordi_x = ordi(graph, symb="X")
+    ordi_x.curseur = g
+    coup = ordi_x.choix()
+    print("Grille avant le coup :")
+    print(g)
+    print("Coup choisi par l'ordi :")
+    print(coup)
+    assert coup.g[2][2] == "X", "L'ordi doit jouer le dernier coup pour un match nul"
+
+def test_ordi_choix_aleatoire():
+    """Situation sans stratégie gagnante ni nulle, l'ordi doit jouer quelque part."""
+    g = grille([
+        ["O", "X", "O"],
+        ["X", "O", "X"],
+        [None, None, None]
+    ])
+    graph = grapheB()
+    ordi_o = ordi(graph, symb="X")
+    ordi_o.curseur = g
+    ordi_o.choix()
+    coup = ordi_o.choix()
+    print("Grille avant le coup :")
+    print(g)
+    print("Coup choisi par l'ordi :")
+    print(coup)
+    assert coup.g[2].count("X") == 1, "L'ordi doit jouer sur la dernière ligne"
+
+
+if __name__ == "__main__":
+    print(grille([['O', 'O', None],['X', 'X', None],[None, None, None]]) in grapheB().attracteur1)
+    test_ordi_choix_victoire_immediate()
+    test_ordi_choix_blocage_adverse()
+    test_ordi_choix_match_nul()
+    test_ordi_choix_aleatoire()
+    print("Tous les tests ordi.choix() sont passés !")
+    
+
+    
