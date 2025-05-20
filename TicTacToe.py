@@ -342,15 +342,12 @@ class ordi :
         Retourne une grille correspondant au meilleur choix.
         """
         if self.curseur in self.mon_attracteur :
-            #print("choix gagnant")
             minimum = min([g for g in self.G.voisins(self.curseur) if g in self.mon_attracteur], key=lambda x : self.mon_attracteur[x])
             return minimum
             
         elif self.curseur in self.attracteur_adverse :
-            #print("choix perdant")
             return max([g for g in self.G.voisins(self.curseur) if g in self.attracteur_adverse], key=lambda x : self.attracteur_adverse[x])
         else :
-            #print("choix situation nulle")
             return self.choix_vers_victoire_rapide()
 
     def choix_vers_victoire_rapide(self):
@@ -392,24 +389,7 @@ class ordi :
 
 
 
-#test
-
-graph = grapheB()
-for i in range(min(5,len(graph.attracteur1))) :
-    #print(list(graph.attracteur1)[i])
-    pass
-
-#print(grille() in graph.attracteur1)
-
-#print(len(graph.attracteur1))
-#print(len(graph.attracteur2))
-#print(len(graph.adj))
-
-#print("Intersection attracteur1 & attracteur2 est vide", not (set(graph.attracteur1) & set(graph.attracteur2)))
-
-ordii = ordi(graph, "X")
-#print(ordii.choix())
-
+#tests 
 def test_ordi_choix_victoire_immediate():
     """L'ordi doit jouer pour gagner immédiatement."""
     g = grille([
@@ -501,15 +481,9 @@ def test_test():
     
 
 if __name__ == "__main__":
-    print(grille([['O', 'O', None],['X', 'X', None],[None, None, None]]) in grapheB().attracteur1)
     test_ordi_choix_victoire_immediate()
     test_ordi_choix_blocage_adverse()
     test_ordi_choix_match_nul()
     test_ordi_choix_aleatoire()
     test_test()
     print("Tous les tests ordi.choix() sont passés !")
-    
-    print(grille([["O", "O", None],["X", "X", None],[None, None, None]]) in ordii.mon_attracteur)
-    
-
-    
