@@ -87,15 +87,16 @@ def degre_dico(g) :
         d[s] = len(g.voisins(s))
     return d
 
-
 def marqueEtPropage(s, d, B, S1, attracteur, compteur):
     if s not in attracteur:
         attracteur[s] = compteur
-        compteur += 1
         for y in B.adj[s]:
             d[y] -= 1
             if y in S1 or d[y] == 0:
-                marqueEtPropage(y, d, B, S1, attracteur, compteur)
+                marqueEtPropage(y, d, B, S1, attracteur, compteur + 1)
+    else :
+        if compteur < attracteur[s] :
+            attracteur[s] = compteur
 
 def calculeAttracteur(A, S1, V1):
     d = degre_dico(A)  # dictionnaire des degrés sortants du graphe A
@@ -104,7 +105,6 @@ def calculeAttracteur(A, S1, V1):
     for s in V1:
         marqueEtPropage(s, d, B, S1, attracteur, 0)
     return attracteur
-
 
 
 

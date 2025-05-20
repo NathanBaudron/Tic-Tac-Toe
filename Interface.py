@@ -24,13 +24,15 @@ while Game:
         joueur1 = random.randint(0, 1)  # Détermine si le joueur humain commence
         joueur_symbole = "X" if joueur1 == 1 else "O"
         ordi1_symbole = "O" if joueur_symbole == "X" else "X"
-        ordi2_symbole = joueur_symbole
         ordi1 = ordi(graph, symb=ordi1_symbole)
-        ordi2 = ordi(graph, symb=ordi2_symbole)
+        ordi2 = ordi(graph, symb="X")
+        ordi3 = ordi(graph, symb="O")
         tour = 1 if joueur1 == 1 else 0
+        tour_auto = 1
         grille_jeu = grille()
         ordi1.update_curseur(grille_jeu)
         ordi2.update_curseur(grille_jeu)
+        ordi3.update_curseur(grille_jeu)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -109,10 +111,14 @@ while Game:
                     grille_jeu = ordi1.choix()  # Utilise directement la grille retournée par ordi1.choix()
                     ordi1.update_curseur(grille_jeu)
                     tour = 1
-
-        if (grille_jeu.verif_winner() is not None or all(cell is not None for row in grille_jeu.g for cell in row)) and not fin:
-            timer = pygame.time.get_ticks()
-            fin = True
+        try :
+            if (grille_jeu.verif_winner() is not None or all(cell is not None for row in grille_jeu.g for cell in row)) and not fin:
+                timer = pygame.time.get_ticks()
+                fin = True
+        except :
+            print(type(grille_jeu))
+            print(grille_jeu)
+            raise AttributeError
 
         pygame.display.flip()
 
@@ -128,39 +134,42 @@ while Game:
                 Automatique = False
                 Menu = True
                 grille_jeu = grille()
-                ordi1.update_curseur(grille_jeu)
                 ordi2.update_curseur(grille_jeu)
+                ordi3.update_curseur(grille_jeu)
         else:
-            if tour == 0:  # Tour de l'ordinateur avec le symbole "X"
+            if tour_auto == 1:  # Tour de l'ordinateur avec le symbole "X"
                 if pygame.time.get_ticks() - timer >= delai:
                     timer = pygame.time.get_ticks()
                     contourrouge(screen, longueur, largeur)
-                    if ordi1.symb == "X":
-                        grille_jeu = ordi1.choix()
-                        ordi1.update_curseur(grille_jeu)
-                        ordi2.update_curseur(grille_jeu)
-                    else:
-                        grille_jeu = ordi2.choix()
-                        ordi1.update_curseur(grille_jeu)
-                        ordi2.update_curseur(grille_jeu)
-                    tour = 1  # Passe au tour de l'autre ordinateur
+                    print("Tour X")
+                    print("coup precedent : ", grille_jeu)
+                    grille_jeu = ordi2.choix()
+                    print("coup choisi : ", grille_jeu)
+                    ordi2.update_curseur(grille_jeu)
+                    print(f"ordi2 considere que c'est sa grille : {grille_jeu in ordi2.grille_mon_tour}")
+                    ordi3.update_curseur(grille_jeu)
+                    print(f"ordi3 considere que c'est sa grille : {grille_jeu in ordi3.grille_mon_tour}")
+                    
+                    tour_auto = 0   # Passe au tour de l'autre ordinateur
             else:  # Tour de l'ordinateur avec le symbole "O"
                 if pygame.time.get_ticks() - timer >= delai:
                     timer = pygame.time.get_ticks()
                     contourbleu(screen, longueur, largeur)
-                    if ordi1.symb == "O":
-                        grille_jeu = ordi1.choix()
-                        ordi1.update_curseur(grille_jeu)
-                        ordi2.update_curseur(grille_jeu)
-                    else:
-                        grille_jeu = ordi2.choix()
-                        ordi1.update_curseur(grille_jeu)
-                        ordi2.update_curseur(grille_jeu)
-                    tour = 0  # Passe au tour de l'ordinateur avec "X"
-
+                    print("Tour O")
+                    print("coup precedent : ", grille_jeu)
+                    grille_jeu = ordi3.choix()
+                    print("coup choisi : ", grille_jeu)
+                    ordi2.update_curseur(grille_jeu)
+                    print(f"ordi2 considere que c'est sa grille : {grille_jeu in ordi2.grille_mon_tour}")
+                    ordi3.update_curseur(grille_jeu)
+                    print(f"ordi3 considere que c'est sa grille : {grille_jeu in ordi3.grille_mon_tour}")
+                    
+                    tour_auto = 1  # Passe au tour de l'ordinateur avec "X"
+        
         if (grille_jeu.verif_winner() is not None or all(cell is not None for row in grille_jeu.g for cell in row)) and not fin:
-            timer = pygame.time.get_ticks()
-            fin = True
+                timer = pygame.time.get_ticks()
+                fin = True
+        
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -171,8 +180,8 @@ while Game:
                 Automatique = False
                 Menu = True
                 grille_jeu = grille()
-                ordi1.update_curseur(grille_jeu)
                 ordi2.update_curseur(grille_jeu)
+                ordi3.update_curseur(grille_jeu)
 
         pygame.display.flip()
 

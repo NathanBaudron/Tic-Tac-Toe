@@ -39,6 +39,7 @@ Dépendances :
 
 from Jeux_a_deux_joueur import GrapheD, calculeAttracteur
 import random
+from collections import deque
 
 
 class grille :
@@ -181,7 +182,7 @@ class grille :
                         nouvelle_grille = self.ajout_symbole(joueur, x, y)
                         nouvelles_grilles.append(nouvelle_grille)
                     except IndexError:
-                        continue
+                        raise IndexError
         return nouvelles_grilles
     
     def __eq__(self, other):
@@ -260,13 +261,16 @@ class grapheB(GrapheD) :
         selon le joueur dont c'est le tour.
         Marque les grilles terminales dans les attracteurs correspondants.
         """
+        
         grilles_suiv = [list(self.adj)[0]]
-        partie_graphe = self.S2
+        partie_graphe = None
         while len(grilles_suiv) > 0 :
             grille_actuelle = grilles_suiv.pop(0)
             nouvelles_grilles = grille_actuelle.getNouvellesGrillesPossibles()
+            assert len(nouvelles_grilles) == sum([e.count(None) for e in grille_actuelle.g])
+            partie_graphe = self.S1 if grille_actuelle.a_qui_le_tour() == "O" else self.S2
             for g in nouvelles_grilles :
-                partie_graphe = self.S1 if g.a_qui_le_tour() == "X" else self.S2
+                
                 #ajout grille à la partie correspondant au joueur qui joue
                 if g not in partie_graphe :
                     partie_graphe.add(g)
@@ -329,15 +333,45 @@ class ordi :
             self.grille_mon_tour = self.G.S2
             self.grille_son_tour = self.G.S1
     
-    
-    
     def choix(self) :
+        """
+        Détermine le prochain coup à jouer en fonction de la position actuelle du curseur et des attracteurs.
+        La méthode choisit un coup gagnant si le curseur est dans l'attracteur du joueur,
+        un coup perdant si le curseur est dans l'attracteur adverse, ou tente de jouer
+        vers une victoire rapide sinon.
+        Retourne une grille correspondant au meilleur choix.
+        """
         if self.curseur in self.mon_attracteur :
-            return min([g for g in self.G.voisins(self.curseur) if g in self.mon_attracteur], key=lambda x : self.mon_attracteur[x])
+            print("choix gagnant")
+            minimum = min([g for g in self.G.voisins(self.curseur) if g in self.mon_attracteur], key=lambda x : self.mon_attracteur[x])
+            return minimum
+            
         elif self.curseur in self.attracteur_adverse :
+            print("choix perdant")
             return max([g for g in self.G.voisins(self.curseur) if g in self.attracteur_adverse], key=lambda x : self.attracteur_adverse[x])
-        else : 
-            return random.choice([e for e in self.G.voisins(self.curseur)  if e not in self.attracteur_adverse])
+        else :
+            print("choix situation nulle")
+            return self.choix_vers_victoire_rapide()
+
+    def choix_vers_victoire_rapide(self):
+        """
+        Cherche parmi les coups possibles celui qui mène le plus rapidement vers une victoire
+        (ou le plus loin d'une défaite), en mesurant la distance à l'attracteur de l'ordi
+        et celui de l'adversaire.
+        Retourne la grille correspondant au meilleur choix.
+        """
+        voisins = [g for g in self.G.voisins(self.curseur) if g not in self.attracteur_adverse]
+        if not voisins:
+            # Si tous les voisins sont perdants, joue aléatoirement
+            return random.choice(list(self.G.voisins(self.curseur)))
+        # Pour chaque voisin, on regarde la distance à l'attracteur de l'ordi
+        def score(g):
+            # Plus la distance à la victoire est courte, mieux c'est
+            dist_victoire = self.mon_attracteur.get(g, float('inf'))
+            dist_defaite = self.attracteur_adverse.get(g, float('inf'))
+            # On privilégie la victoire rapide, sinon on retarde la défaite
+            return (dist_victoire, -dist_defaite)
+        return min(voisins, key=score)
         
     
     
@@ -435,7 +469,7 @@ def test_ordi_choix_aleatoire():
         [None, None, None]
     ])
     graph = grapheB()
-    ordi_o = ordi(graph, symb="X")
+    ordi_o = ordi(graph, symb="O")
     ordi_o.curseur = g
     ordi_o.choix()
     coup = ordi_o.choix()
@@ -446,13 +480,36 @@ def test_ordi_choix_aleatoire():
     assert coup.g[2].count("X") == 1, "L'ordi doit jouer sur la dernière ligne"
 
 
+def test_test():
+    """Situation de blocage, on test ici si il bloque directement (illustrait des probleme d'attracteur)"""
+    g = grille([
+        ["O", None, "X"],
+        [None, None, None],
+        [None, None, "X"]
+    ])
+    graph = grapheB()
+    ordi_o = ordi(graph, symb="O")
+    ordi_o.curseur = g
+    ordi_o.choix()
+    coup = ordi_o.choix()
+    print("Grille avant le coup :")
+    print(g)
+    print("Coup choisi par l'ordi :")
+    print(coup)
+    print(g in ordi_o.mon_attracteur)
+    assert coup.g[1][2] == "O", "mal joué"
+    
+
 if __name__ == "__main__":
     print(grille([['O', 'O', None],['X', 'X', None],[None, None, None]]) in grapheB().attracteur1)
     test_ordi_choix_victoire_immediate()
     test_ordi_choix_blocage_adverse()
     test_ordi_choix_match_nul()
     test_ordi_choix_aleatoire()
+    test_test()
     print("Tous les tests ordi.choix() sont passés !")
+    
+    print(grille([["O", "O", None],["X", "X", None],[None, None, None]]) in ordii.mon_attracteur)
     
 
     
