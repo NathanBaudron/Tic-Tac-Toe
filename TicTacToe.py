@@ -342,15 +342,15 @@ class ordi :
         Retourne une grille correspondant au meilleur choix.
         """
         if self.curseur in self.mon_attracteur :
-            print("choix gagnant")
+            #print("choix gagnant")
             minimum = min([g for g in self.G.voisins(self.curseur) if g in self.mon_attracteur], key=lambda x : self.mon_attracteur[x])
             return minimum
             
         elif self.curseur in self.attracteur_adverse :
-            print("choix perdant")
+            #print("choix perdant")
             return max([g for g in self.G.voisins(self.curseur) if g in self.attracteur_adverse], key=lambda x : self.attracteur_adverse[x])
         else :
-            print("choix situation nulle")
+            #print("choix situation nulle")
             return self.choix_vers_victoire_rapide()
 
     def choix_vers_victoire_rapide(self):
