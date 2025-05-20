@@ -249,9 +249,6 @@ def affichage_fin_du_jeu_ordi(screen, jgagnant, joueur, longueur, largeur):
 
     font = pygame.font.Font('Polices/CrayonHandRegular2016Demo.ttf', 80)
 
-    if jgagnant is None:
-        text = font.render("Match nul !", True, (120, 120, 120))
-
     if jgagnant == joueur and joueur == "X":
         text = font.render("L'ordinateur 2 a gagné !", True, (255, 68, 56, 255))
     elif jgagnant == joueur and joueur == "O":
@@ -262,6 +259,6 @@ def affichage_fin_du_jeu_ordi(screen, jgagnant, joueur, longueur, largeur):
         text = font.render("L'ordinateur 1 gagné !", True, (255, 68, 56, 255))
     else:
         # Cas par défaut si aucune des conditions ci-dessus n'est satisfaite
-        text = font.render("Erreur inconnue", True, (255, 0, 0))
-
+        text = font.render("Match nul", True, (120, 120, 120))
+    print(jgagnant)
     screen.blit(text, ((longueur - text.get_width()) // 2, (largeur - text.get_height()) // 2))
